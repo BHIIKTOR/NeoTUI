@@ -2,6 +2,32 @@
 
 NeoTui is a Bun-first, TypeScript-first, kitty-only terminal UI toolkit.
 
+## In Action
+
+`examples/basic-playground.ts` is the fastest way to see the current surface
+area: overview, command palette, reusable chrome, and floating workspaces inside
+a real kitty-native session.
+
+<p align="center">
+  <img src="img/playground-tour.gif" alt="NeoTui playground tour" width="960" />
+</p>
+
+<p align="center">
+  <a href="img/playground-tour.mp4">MP4</a>
+  ·
+  <a href="img/playground-overview.png">Overview</a>
+  ·
+  <a href="img/playground-command.png">Command Palette</a>
+  ·
+  <a href="img/playground-windows.png">Window Workspace</a>
+</p>
+
+<p align="center">
+  <img src="img/playground-overview.png" alt="NeoTui playground overview" width="32%" />
+  <img src="img/playground-command.png" alt="NeoTui playground command palette" width="32%" />
+  <img src="img/playground-windows.png" alt="NeoTui playground floating windows" width="32%" />
+</p>
+
 The active workspace is entirely NeoTui:
 
 - `@neotui/core`
