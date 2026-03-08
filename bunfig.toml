@@ -1,0 +1,6 @@
+[install]
+linker = "hoisted"
+saveTextLockfile = true
+
+[test]
+root = "."

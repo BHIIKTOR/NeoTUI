@@ -1,0 +1,25 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`single primitive golden fixture is deterministic 1`] = `
+"┌─golden───────┐        
+│primitive     │        
+│              │        
+│              │        
+│              │        
+└──────────────┘        
+                        
+                        "
+`;
+
+exports[`nested tree golden fixture is deterministic 1`] = `
+"┌─root─────────────────────────┐
+│                              │
+│ top-line                     │
+│                              │
+│ ┌──────────────────────────┐ │
+│ │inner box                 │ │
+│ └──────────────────────────┘ │
+│                              │
+│                              │
+└──────────────────────────────┘"
+`;

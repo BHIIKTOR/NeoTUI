@@ -1,0 +1,14 @@
+{
+  "name": "@neotui/multiplex",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "typecheck": "bunx tsc -p tsconfig.json --noEmit",
+    "lint": "bunx @biomejs/biome check src package.json tsconfig.json"
+  },
+  "dependencies": {
+    "@neotui/components": "workspace:*",
+    "@neotui/core": "workspace:*"
+  }
+}

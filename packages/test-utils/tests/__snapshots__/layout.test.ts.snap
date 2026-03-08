@@ -1,0 +1,376 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`layout fixture single-box renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│one                                   │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture nested-column renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│┌────────────────────────────────────┐│
+└│top                                 │┘
+ └────────────────────────────────────┘ 
+ ┌────────────────────────────────────┐ 
+ │                                    │ 
+ └────────────────────────────────────┘ 
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture nested-row renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture gap-column renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│┌────────────────────────────────────┐│
+└│a                                   │┘
+ └────────────────────────────────────┘ 
+                                        
+ ┌────────────────────────────────────┐ 
+ │                                    │ 
+ └────────────────────────────────────┘ 
+                                        
+ ┌────────────────────────────────────┐ 
+ │                                    │ 
+ └────────────────────────────────────┘ "
+`;
+
+exports[`layout fixture padding renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+│ pad                                  │
+│                                      │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture margin-row renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture percent-width renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture percent-height renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│┌────────────────────────────────────┐│
+└│bottom                              │┘
+ └────────────────────────────────────┘ 
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture absolute-overlay renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│base                                  │
+└────────┌────┐────────────────────────┘
+         │    │                         
+         └────┘                         
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture min-width renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                       
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture max-width renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture align-center-row renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│┌──────┐                              │
+└│center│──────────────────────────────┘
+ └──────┘                               
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture align-end-column renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                              ┌──────┐│
+└──────────────────────────────│end   │┘
+                               └──────┘ 
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture justify-between renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture scrollbox-content renders deterministically 1`] = `
+"┌─scroll───────────────────────────────┐
+│                                      │
+│ line2                                │
+│                                      │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture scrollbar-ratio renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                     #│
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture z-index-overlay renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│┌──────────────┐                      │
+└│back          │──────────────────────┘
+ │     ┌────────┐                       
+ │     │        │                       
+ └─────└────────┘                       
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture frame-buffer renders deterministically 1`] = `
+"abcd                                    
+efgh                                    
+ijkl                                    
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture mixed-row-column renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└─────────────┌──────────────────────┐─┘
+              │                      │  
+              └──────────────────────┘  
+                                        
+              ┌──────────────────────┐  
+              │                      │  
+              └──────────────────────┘  
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture two-columns-percent renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture grow-split renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture clip-hidden renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│row1                                  │
+│row2                                  │
+│row3                                  │
+│row4                                  │
+└row5──────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture title-border renders deterministically 1`] = `
+"┌─head─────────────────────────────────┐
+│title                                 │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture auto-text-measure renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│auto sized text line                  │
+└──────────────────────────────────────┘
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;
+
+exports[`layout fixture nested-padding-overlay renders deterministically 1`] = `
+"┌─pad──────────────────────────────────┐
+│                                      │
+│ ┌───────────┌─────┐────────────────┐ │
+│ │           │tag  │                │ │
+└─│ inner     └─────┘                │─┘
+  │                                  │  
+  └──────────────────────────────────┘  
+                                        
+                                        
+                                        
+                                        
+                                        "
+`;

@@ -1,0 +1,7 @@
+interface:
+  display_name: "NeoTui Usage"
+  short_description: "Use NeoTui core, components, and React with Bun and kitty."
+  default_prompt: "Use $core to show how to use @neotui/core, @neotui/components, or @neotui/react with Bun and kitty."
+
+policy:
+  allow_implicit_invocation: true

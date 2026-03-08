@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "useDefineForClassFields": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@neotui/components": ["./packages/components/src/index.ts"],
+      "@neotui/core": ["./packages/core/src/index.ts"],
+      "@neotui/fixtures": ["./packages/fixtures/src/index.ts"],
+      "@neotui/react": ["./packages/react/src/index.tsx"],
+      "@neotui/test-utils": ["./packages/test-utils/src/index.ts"]
+    },
+    "esModuleInterop": true,
+    "allowJs": false,
+    "jsx": "react-jsx",
+    "noEmit": true
+  }
+}
