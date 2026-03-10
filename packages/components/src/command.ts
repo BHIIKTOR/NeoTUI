@@ -640,6 +640,14 @@ export class CommandRenderable extends BoxRenderable {
     }
   }
 
+  protected override paint(context: RenderContext): void {
+    if (this.variant === "overlay") {
+      return;
+    }
+
+    super.paint(context);
+  }
+
   protected override onUnmount(): void {
     this.cleanupSubscriptions();
   }

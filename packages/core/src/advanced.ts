@@ -318,7 +318,7 @@ export class ASCIIFontRenderable extends BoxRenderable {
   }
 }
 
-function markdownToLines(markdown: string): TextSpan[][] {
+export function markdownToLines(markdown: string): TextSpan[][] {
   const lines: TextSpan[][] = [];
   let inFence = false;
   let fenceLanguage = "";
@@ -347,13 +347,11 @@ function markdownToLines(markdown: string): TextSpan[][] {
       continue;
     }
 
-    if (line.startsWith("# ")) {
-      lines.push([{ text: line.slice(2).toUpperCase(), fg: "#f0c674" }]);
-      continue;
-    }
-
-    if (line.startsWith("## ")) {
-      lines.push([{ text: `◦ ${line.slice(3)}`, fg: "#e5c07b" }]);
+    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    if (headingMatch) {
+      const level = headingMatch[1]?.length ?? 0;
+      const headingText = headingMatch[2] ?? "";
+      lines.push(renderMarkdownHeading(level, headingText));
       continue;
     }
 
@@ -391,6 +389,44 @@ function markdownToLines(markdown: string): TextSpan[][] {
   }
 
   return lines;
+}
+
+function renderMarkdownHeading(level: number, text: string): TextSpan[] {
+  const content = parseInlineMarkdown(text, "#f2e7d5");
+
+  switch (level) {
+    case 1:
+      return content.map((span) => ({
+        ...span,
+        text: span.text.toUpperCase(),
+        fg: "#f0c674",
+      }));
+    case 2:
+      return [
+        { text: "◦ ", fg: "#e5c07b" },
+        ...content.map((span) => ({ ...span, fg: "#e5c07b" })),
+      ];
+    case 3:
+      return [
+        { text: "▸ ", fg: "#d19a66" },
+        ...content.map((span) => ({ ...span, fg: "#d19a66" })),
+      ];
+    case 4:
+      return [
+        { text: "• ", fg: "#caa977" },
+        ...content.map((span) => ({ ...span, fg: "#caa977" })),
+      ];
+    case 5:
+      return [
+        { text: "· ", fg: "#bfa58a" },
+        ...content.map((span) => ({ ...span, fg: "#bfa58a" })),
+      ];
+    default:
+      return [
+        { text: "› ", fg: "#a88f77" },
+        ...content.map((span) => ({ ...span, fg: "#a88f77" })),
+      ];
+  }
 }
 
 function parseInlineMarkdown(line: string, fallbackFg = "#d8dee9"): TextSpan[] {

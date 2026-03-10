@@ -57,3 +57,21 @@ test("advanced components render deterministically", () => {
   expect(snapshot).toContain("/\\");
   expect(snapshot).toContain("line 0 alpha beta");
 });
+
+test("markdown renderable supports heading levels beyond h2", () => {
+  const renderer = createTestRenderer(60, 8);
+
+  renderer.add(
+    new MarkdownRenderable({
+      markdown: "### Observability Layer\n#### Prompt Metrics",
+      layout: { height: 4 },
+    }),
+  );
+
+  const snapshot = renderer.renderToString();
+
+  expect(snapshot).toContain("▸ Observability Layer");
+  expect(snapshot).toContain("• Prompt Metrics");
+  expect(snapshot).not.toContain("### Observability Layer");
+  expect(snapshot).not.toContain("#### Prompt Metrics");
+});

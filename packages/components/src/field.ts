@@ -196,7 +196,15 @@ export class FieldRenderable extends BoxRenderable {
     return this;
   }
 
-  protected override paint(): void {}
+  protected override paint(context: Parameters<BoxRenderable["render"]>[0]): void {
+    if (
+      this.hasBorder() ||
+      typeof this.styleProps.bg !== "undefined" ||
+      typeof this.styleProps.backgroundChar !== "undefined"
+    ) {
+      super.paint(context);
+    }
+  }
 
   override measurePreferredSize(
     parentBounds: Parameters<BoxRenderable["measurePreferredSize"]>[0],

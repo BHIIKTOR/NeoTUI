@@ -149,6 +149,22 @@ export class DialogRenderable extends BoxRenderable {
     return this;
   }
 
+  setSize(
+    width?: number | `${number}%`,
+    height?: number | `${number}%` | "auto",
+  ): this {
+    if (width) {
+      this.dialogWidth = width;
+    }
+    if (height) {
+      this.dialogHeight = height;
+    }
+    if (this.isOpen()) {
+      this.syncCardLayout();
+    }
+    return this;
+  }
+
   isOpen(): boolean {
     return this.styleProps.visible === true;
   }

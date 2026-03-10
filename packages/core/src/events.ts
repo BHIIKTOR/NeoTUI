@@ -77,7 +77,9 @@ const bracketedPasteStart = `${CSI}200~`;
 const bracketedPasteEnd = `${CSI}201~`;
 const sgrMousePattern = new RegExp(`^${ESC}\\[<(\\d+);(\\d+);(\\d+)([mM])`);
 const kittyKeyboardPattern = new RegExp(`^${ESC}\\[([0-9:]+)(?:;([0-9:]*))?(?:;([0-9:]*))?u`);
-const modifiedArrowPattern = new RegExp(`^${ESC}\\[(?:1;)?(\\d+)([ABCDHF])`);
+const modifyOtherKeysPattern = new RegExp(`^${ESC}\\[(27);(\\d+);(\\d+)~`);
+const modifiedTildePattern = new RegExp(`^${ESC}\\[(\\d+);(\\d+)~`);
+const modifiedArrowPattern = new RegExp(`^${ESC}\\[(?:1;)?(\\d+(?::\\d+)?)([ABCDHF])`);
 const functionPattern = new RegExp(`^${ESC}(?:O([PQRS])|\\[(\\d+)~)`);
 
 export function parseInput(input: string): ParsedInputEvent[] {
@@ -138,6 +140,34 @@ export function parseInput(input: string): ParsedInputEvent[] {
       continue;
     }
 
+    const modifyOtherKeys = remaining.match(modifyOtherKeysPattern);
+
+    if (modifyOtherKeys) {
+      events.push(
+        createModifyOtherKeysEvent(
+          modifyOtherKeys[0],
+          modifyOtherKeys[2] ?? "1",
+          modifyOtherKeys[3] ?? "0",
+        ),
+      );
+      cursor += modifyOtherKeys[0].length;
+      continue;
+    }
+
+    const modifiedTilde = remaining.match(modifiedTildePattern);
+
+    if (modifiedTilde) {
+      events.push(
+        createModifiedTildeKeyEvent(
+          modifiedTilde[0],
+          modifiedTilde[1] ?? "0",
+          modifiedTilde[2] ?? "1",
+        ),
+      );
+      cursor += modifiedTilde[0].length;
+      continue;
+    }
+
     if (remaining.startsWith(`${CSI}Z`)) {
       events.push(
         createKeyEvent("Tab", { shift: true, alt: false, ctrl: false, meta: false }, `${CSI}Z`),
@@ -149,13 +179,14 @@ export function parseInput(input: string): ParsedInputEvent[] {
     const modifiedArrow = remaining.match(modifiedArrowPattern);
 
     if (modifiedArrow) {
-      events.push(
-        createModifiedArrowEvent(
-          modifiedArrow[0],
-          modifiedArrow[1] ?? "1",
-          modifiedArrow[2] ?? "A",
-        ),
+      const modifiedArrowEvent = createModifiedArrowEvent(
+        modifiedArrow[0],
+        modifiedArrow[1] ?? "1",
+        modifiedArrow[2] ?? "A",
       );
+      if (modifiedArrowEvent) {
+        events.push(modifiedArrowEvent);
+      }
       cursor += modifiedArrow[0].length;
       continue;
     }
@@ -314,21 +345,31 @@ function createKittyKeyEvent(
   modifierField?: string,
   textField?: string,
 ): KeyEvent | null {
-  const keyCode = Number.parseInt(keyField.split(":")[0] ?? "0", 10);
-  const { modifiers, eventType } = decodeKittyModifierField(modifierField);
+  const key = decodeKittyKeyField(keyField);
+  const modifierInfo = decodeKittyModifierField(modifierField);
+  const { modifiers, eventType } = modifierInfo;
 
   if (eventType === 3) {
     return null;
   }
 
-  const text = decodeKittyTextField(textField) ?? decodeKittyDefaultText(keyCode);
-  const key = decodeKittyKeyName(keyCode, text);
-  const event = createKeyEvent(key, modifiers, raw, text);
+  const text =
+    decodeKittyTextField(textField) ?? decodeKittyPrintableText(key, modifierInfo);
+  const event = createKeyEvent(decodeKittyKeyName(key.keyCode, text), modifiers, raw, text);
   event.repeat = eventType === 2;
   return event;
 }
 
-function createModifiedArrowEvent(raw: string, modifierValue: string, code: string): KeyEvent {
+function createModifiedArrowEvent(
+  raw: string,
+  modifierValue: string,
+  code: string,
+): KeyEvent | null {
+  const [modifierPart, eventTypePart] = modifierValue.split(":");
+  const eventType = Number.parseInt(eventTypePart ?? "1", 10);
+  if (eventType === 3) {
+    return null;
+  }
   const keyMap: Record<string, string> = {
     A: "ArrowUp",
     B: "ArrowDown",
@@ -338,34 +379,40 @@ function createModifiedArrowEvent(raw: string, modifierValue: string, code: stri
     F: "End",
   };
 
-  return createKeyEvent(keyMap[code] ?? code, decodeModifiers(modifierValue), raw);
+  return createKeyEvent(keyMap[code] ?? code, decodeModifiers(modifierPart ?? modifierValue), raw);
 }
 
 function createFunctionKeyEvent(raw: string, ss3Code?: string, tildeCode?: string): KeyEvent {
-  const keyMap: Record<string, string> = {
-    P: "F1",
-    Q: "F2",
-    R: "F3",
-    S: "F4",
-    "1": "Home",
-    "2": "Insert",
-    "3": "Delete",
-    "4": "End",
-    "5": "PageUp",
-    "6": "PageDown",
-    "7": "Home",
-    "8": "End",
-    "15": "F5",
-    "17": "F6",
-    "18": "F7",
-    "19": "F8",
-    "20": "F9",
-    "21": "F10",
-    "23": "F11",
-    "24": "F12",
-  };
+  return createKeyEvent(
+    decodeFunctionKeyName(ss3Code ?? tildeCode ?? ""),
+    emptyModifiers(),
+    raw,
+  );
+}
 
-  return createKeyEvent(keyMap[ss3Code ?? tildeCode ?? ""] ?? "Unknown", emptyModifiers(), raw);
+function createModifiedTildeKeyEvent(
+  raw: string,
+  keyCodeValue: string,
+  modifierValue: string,
+): KeyEvent {
+  const keyName = decodeFunctionKeyName(keyCodeValue);
+  return createKeyEvent(
+    keyName,
+    decodeModifiers(modifierValue),
+    raw,
+    defaultTextForKeyName(keyName),
+  );
+}
+
+function createModifyOtherKeysEvent(
+  raw: string,
+  modifierValue: string,
+  codePointValue: string,
+): KeyEvent {
+  const key = decodeKittyKeyField(codePointValue);
+  const modifierInfo = decodeKittyModifierField(modifierValue);
+  const text = decodeKittyPrintableText(key, modifierInfo) ?? decodeCodePointText(key.keyCode);
+  return createKeyEvent(decodeKittyKeyName(key.keyCode, text), modifierInfo.modifiers, raw, text);
 }
 
 function createMouseEventFromSgr(
@@ -439,36 +486,47 @@ function decodeControlKey(input: string): { event: KeyEvent; length: number } | 
 }
 
 function decodeModifiers(value: string): EventModifiers {
-  const numeric = Math.max(1, Number.parseInt(value.split(":")[0] ?? value, 10));
-  const bits = numeric - 1;
+  const bits = decodeModifierBits(value);
 
   return {
     shift: Boolean(bits & 1),
     alt: Boolean(bits & 2),
     ctrl: Boolean(bits & 4),
-    meta: Boolean(bits & 8),
+    meta: Boolean(bits & (8 | 16 | 32)),
   };
 }
 
 function decodeKittyModifierField(value?: string): {
   modifiers: EventModifiers;
   eventType: 1 | 2 | 3;
+  capsLock: boolean;
+  numLock: boolean;
 } {
   if (!value || value.length === 0) {
     return {
       modifiers: emptyModifiers(),
       eventType: 1,
+      capsLock: false,
+      numLock: false,
     };
   }
 
   const [modifierPart, eventTypePart] = value.split(":");
   const rawEventType = Number.parseInt(eventTypePart ?? "1", 10);
   const eventType: 1 | 2 | 3 = rawEventType === 2 ? 2 : rawEventType === 3 ? 3 : 1;
+  const bits = decodeModifierBits(modifierPart ?? "1");
 
   return {
     modifiers: decodeModifiers(modifierPart ?? "1"),
     eventType,
+    capsLock: Boolean(bits & 64),
+    numLock: Boolean(bits & 128),
   };
+}
+
+function decodeModifierBits(value: string): number {
+  const numeric = Math.max(1, Number.parseInt(value.split(":")[0] ?? value, 10));
+  return numeric - 1;
 }
 
 function decodeKittyTextField(value?: string): string | undefined {
@@ -488,7 +546,28 @@ function decodeKittyTextField(value?: string): string | undefined {
   return String.fromCodePoint(...codePoints);
 }
 
+function decodeKittyKeyField(value: string): {
+  keyCode: number;
+  shiftedKeyCode?: number;
+  baseLayoutKeyCode?: number;
+} {
+  const [keyCodeValue, shiftedKeyCodeValue, baseLayoutKeyCodeValue] = value.split(":");
+  const keyCode = Number.parseInt(keyCodeValue ?? "0", 10);
+  const shiftedKeyCode = parseOptionalPositiveInt(shiftedKeyCodeValue);
+  const baseLayoutKeyCode = parseOptionalPositiveInt(baseLayoutKeyCodeValue);
+
+  return {
+    keyCode,
+    shiftedKeyCode,
+    baseLayoutKeyCode,
+  };
+}
+
 function decodeKittyDefaultText(keyCode: number): string | undefined {
+  if (isPrivateUseCodePoint(keyCode)) {
+    return undefined;
+  }
+
   if (keyCode >= 32 && keyCode !== 127) {
     try {
       return String.fromCodePoint(keyCode);
@@ -506,6 +585,53 @@ function decodeKittyDefaultText(keyCode: number): string | undefined {
   }
 
   return undefined;
+}
+
+function decodeKittyPrintableText(
+  key: { keyCode: number; shiftedKeyCode?: number },
+  modifierInfo: { modifiers: EventModifiers; capsLock: boolean },
+): string | undefined {
+  if (modifierInfo.modifiers.shift && key.shiftedKeyCode) {
+    const shifted = decodeCodePointText(key.shiftedKeyCode);
+    if (shifted) {
+      return shifted;
+    }
+  }
+
+  const base = decodeKittyDefaultText(key.keyCode);
+  if (!base || base.length !== 1) {
+    return base;
+  }
+
+  if (isAsciiLetter(base)) {
+    const uppercase = base.toUpperCase();
+    if (modifierInfo.capsLock) {
+      return modifierInfo.modifiers.shift ? base : uppercase;
+    }
+    return modifierInfo.modifiers.shift ? uppercase : base;
+  }
+
+  if (modifierInfo.modifiers.shift) {
+    return shiftedAsciiMap[base] ?? base;
+  }
+
+  return base;
+}
+
+function decodeCodePointText(keyCode: number): string | undefined {
+  if (isPrivateUseCodePoint(keyCode)) {
+    return undefined;
+  }
+
+  if (keyCode < 32 || keyCode === 127) {
+    return undefined;
+  }
+
+  try {
+    return String.fromCodePoint(keyCode);
+  } catch {
+    return undefined;
+  }
 }
 
 function decodeKittyKeyName(keyCode: number, text?: string): string {
@@ -529,7 +655,59 @@ const kittyNamedKeyMap: Record<number, string> = {
   57361: "PrintScreen",
   57362: "Pause",
   57363: "Menu",
+  57441: "LeftShift",
+  57442: "LeftControl",
+  57443: "LeftAlt",
+  57444: "LeftSuper",
+  57445: "LeftHyper",
+  57446: "LeftMeta",
+  57447: "RightShift",
+  57448: "RightControl",
+  57449: "RightAlt",
+  57450: "RightSuper",
+  57451: "RightHyper",
+  57452: "RightMeta",
 };
+
+function decodeFunctionKeyName(code: string): string {
+  const keyMap: Record<string, string> = {
+    P: "F1",
+    Q: "F2",
+    R: "F3",
+    S: "F4",
+    "1": "Home",
+    "2": "Insert",
+    "3": "Delete",
+    "4": "End",
+    "5": "PageUp",
+    "6": "PageDown",
+    "7": "Home",
+    "8": "End",
+    "9": "Tab",
+    "13": "Enter",
+    "15": "F5",
+    "17": "F6",
+    "18": "F7",
+    "19": "F8",
+    "20": "F9",
+    "21": "F10",
+    "23": "F11",
+    "24": "F12",
+  };
+
+  return keyMap[code] ?? "Unknown";
+}
+
+function defaultTextForKeyName(keyName: string): string | undefined {
+  switch (keyName) {
+    case "Enter":
+      return "\n";
+    case "Tab":
+      return "\t";
+    default:
+      return undefined;
+  }
+}
 
 function decodeMouseButton(buttonCode: number): MouseEvent["button"] {
   const normalized = buttonCode & 3;
@@ -579,3 +757,48 @@ function emptyModifiers(): EventModifiers {
     meta: false,
   };
 }
+
+function isPrivateUseCodePoint(value: number): boolean {
+  return (
+    (value >= 0xe000 && value <= 0xf8ff) ||
+    (value >= 0xf0000 && value <= 0xffffd) ||
+    (value >= 0x100000 && value <= 0x10fffd)
+  );
+}
+
+function parseOptionalPositiveInt(value?: string): number | undefined {
+  if (!value || value.length === 0) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function isAsciiLetter(value: string): boolean {
+  return value.length === 1 && value >= "a" && value <= "z";
+}
+
+const shiftedAsciiMap: Record<string, string> = {
+  "`": "~",
+  "1": "!",
+  "2": "@",
+  "3": "#",
+  "4": "$",
+  "5": "%",
+  "6": "^",
+  "7": "&",
+  "8": "*",
+  "9": "(",
+  "0": ")",
+  "-": "_",
+  "=": "+",
+  "[": "{",
+  "]": "}",
+  "\\": "|",
+  ";": ":",
+  "'": "\"",
+  ",": "<",
+  ".": ">",
+  "/": "?",
+};

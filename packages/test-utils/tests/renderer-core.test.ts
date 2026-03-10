@@ -67,6 +67,24 @@ test("localized updates keep dirty rows localized", () => {
   expect(renderer.metrics.lastInvalidatedIds).toContain(bottom.id);
 });
 
+test("renderer strips ansi and control sequences from rendered text content", () => {
+  const renderer = createTestRenderer(40, 8);
+
+  renderer.add(
+    new BoxRenderable({
+      layout: { width: 30, height: 5 },
+      style: { border: true, title: "safe" },
+      content: "alpha\u001b[31mred\u001b[0m\tbeta\u0007",
+    }),
+  );
+
+  const snapshot = renderer.renderToString();
+
+  expect(snapshot).toContain("alphared  beta");
+  expect(snapshot).not.toContain("\u001b");
+  expect(snapshot).not.toContain("[31m");
+});
+
 test("live mode reference counting and pause resume are deterministic", async () => {
   const renderer = createTestRenderer(20, 6);
   const initialFrames = renderer.metrics.frameCount;

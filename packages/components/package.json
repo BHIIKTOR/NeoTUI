@@ -14,7 +14,7 @@
     "@neotui/core": "workspace:*"
   },
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build": "bun build src/index.ts --outdir dist --target bun --external @neotui/core",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
     "lint": "bunx @biomejs/biome check src package.json tsconfig.json"
   }

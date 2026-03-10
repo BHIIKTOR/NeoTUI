@@ -5,7 +5,7 @@ import {
   ScrollAreaRenderable,
   ScrollbarRenderable,
 } from "@neotui/components";
-import { TextRenderable } from "@neotui/core";
+import { BoxRenderable, TextRenderable } from "@neotui/core";
 import { createTestRenderer } from "../src/index.ts";
 
 test("standalone scrollbar supports vertical and horizontal metrics", () => {
@@ -125,6 +125,50 @@ test("scroll area translates nested subtree content instead of only moving conta
   expect(scrollArea.getScrollPosition().y).toBeGreaterThan(0);
 });
 
+test("scroll area responds to mouse wheel scrolling", () => {
+  const renderer = createTestRenderer(32, 10);
+  const scrollArea = new ScrollAreaRenderable({
+    direction: "vertical",
+    scrollbarVisibility: "always",
+    layout: { width: "100%", height: 6 },
+  });
+
+  for (let index = 0; index < 12; index += 1) {
+    scrollArea.add(
+      new TextRenderable({
+        content: `line-${index}`,
+        layout: { height: 1 },
+      }),
+    );
+  }
+
+  renderer.add(scrollArea);
+  renderer.renderFrame();
+
+  const wheelEvent = {
+    type: "mouse",
+    action: "wheel",
+    button: "middle",
+    x: 2,
+    y: 2,
+    wheelDelta: -1,
+    modifiers: { shift: false, alt: false, ctrl: false, meta: false },
+    defaultPrevented: false,
+    propagationStopped: false,
+    preventDefault() {
+      wheelEvent.defaultPrevented = true;
+    },
+    stopPropagation() {
+      wheelEvent.propagationStopped = true;
+    },
+  };
+
+  renderer.dispatchEvent(scrollArea, wheelEvent as never);
+
+  expect(scrollArea.getScrollPosition().y).toBeGreaterThan(0);
+  expect(wheelEvent.defaultPrevented).toBe(true);
+});
+
 test("scrolled nested controls remain clickable at their visible coordinates", () => {
   const renderer = createTestRenderer(40, 12);
   const scrollArea = new ScrollAreaRenderable({
@@ -201,4 +245,42 @@ test("scrolled bordered controls stay clipped inside their scroll viewport", () 
   const snapshot = renderer.renderToString();
   expect(snapshot).toContain("header sentinel");
   expect(snapshot).not.toContain("Top action");
+});
+
+test("scrolled box background and border stay clipped inside their scroll viewport", () => {
+  const renderer = createTestRenderer(30, 10);
+  renderer.root.updateLayout({ flexDirection: "column" });
+
+  const header = new TextRenderable({
+    content: "header sentinel",
+    layout: { height: 1 },
+  });
+  const scrollArea = new ScrollAreaRenderable({
+    direction: "vertical",
+    scrollbarVisibility: "always",
+    layout: { width: "100%", height: 7 },
+  });
+  const card = new BoxRenderable({
+    content: "top content",
+    layout: { width: "100%", height: 10 },
+    style: {
+      border: true,
+      title: "card",
+      bg: "#4a2a16",
+      borderFg: "#66d9ef",
+    },
+  });
+
+  scrollArea.add(card);
+  renderer.add(header, scrollArea);
+
+  scrollArea.setScrollY(3);
+  const frame = renderer.renderToBuffer();
+
+  const headerCell = frame.getCell(0, 0);
+  const topViewportCell = frame.getCell(2, 2);
+
+  expect(headerCell?.char).toBe("h");
+  expect(headerCell?.bg).toBeUndefined();
+  expect(topViewportCell?.bg).toBe("#4a2a16");
 });

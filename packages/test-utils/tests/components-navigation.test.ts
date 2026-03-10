@@ -1,6 +1,10 @@
 import { expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import {
   BreadcrumbRenderable,
+  FileNavigatorRenderable,
   ScrollAreaRenderable,
   ScrollbarRenderable,
   SeparatorRenderable,
@@ -98,7 +102,33 @@ test("scroll area supports keyboard and wheel scrolling", () => {
 
   renderer.renderFrame();
   renderer.dispatchInput("\u001b[<64;2;2M");
-  expect(scrollArea.getScrollPosition().y).toBe(3);
+  expect(scrollArea.getScrollPosition().y).toBe(1);
+});
+
+test("scroll area clamps pre-layout scroll targets on first render", () => {
+  const renderer = createTestRenderer(24, 8);
+  const scrollArea = new ScrollAreaRenderable({
+    layout: { width: "100%", height: 6 },
+  });
+
+  for (let index = 0; index < 8; index += 1) {
+    scrollArea.add(
+      new TextRenderable({
+        content: `line-${index}`,
+        layout: { height: 1 },
+      }),
+    );
+  }
+
+  scrollArea.setScrollY(999);
+  renderer.add(scrollArea);
+  renderer.renderFrame();
+  const snapshot = renderer.renderToString();
+
+  expect(scrollArea.getScrollPosition().y).toBeGreaterThan(0);
+  expect(scrollArea.getScrollPosition().y).toBeLessThan(999);
+  expect(snapshot).toContain("line-7");
+  expect(snapshot).not.toContain("line-0");
 });
 
 test("scrollbar supports standalone metrics and both-axis scroll areas", () => {
@@ -190,4 +220,75 @@ test("sidebar supports keyboard selection, collapse, and mouse activation", () =
   renderer.renderFrame();
   renderer.dispatchInput("\u001b[<0;2;3M");
   expect(sidebar.getActiveItemId()).toBe("overview");
+});
+
+test("file navigator browses directories and chooses files in file mode", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "neotui-file-nav-"));
+  try {
+    mkdirSync(path.join(root, "alpha", "nested"), { recursive: true });
+    mkdirSync(path.join(root, "beta"), { recursive: true });
+    writeFileSync(path.join(root, "README.md"), "# hi\n");
+
+    const renderer = createTestRenderer(64, 18);
+    const navigator = new FileNavigatorRenderable({
+      rootPath: root,
+      currentPath: root,
+      mode: "file",
+      layout: { width: "100%", height: 12 },
+    });
+
+    let submittedPath = "";
+    navigator.on("submit", (event) => {
+      submittedPath = String((event as { value: { path: string } }).value.path);
+    });
+
+    renderer.add(navigator);
+    renderer.focus(navigator);
+    const initialSnapshot = renderer.renderToString();
+
+    expect(initialSnapshot).toContain("alpha/");
+    expect(initialSnapshot).toContain("README.md");
+
+    renderer.dispatchInput("\r");
+    expect(navigator.getCurrentPath()).toBe(path.join(root, "alpha"));
+
+    renderer.dispatchInput("\u007f");
+    expect(navigator.getCurrentPath()).toBe(root);
+
+    renderer.dispatchInput("\u001b[B");
+    renderer.dispatchInput("\u001b[B");
+    renderer.dispatchInput("\r");
+
+    expect(submittedPath).toBe(path.join(root, "README.md"));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("file navigator directory mode hides files and supports constrained roots", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "neotui-file-nav-dir-"));
+  try {
+    mkdirSync(path.join(root, "workspace", "src"), { recursive: true });
+    writeFileSync(path.join(root, "workspace", "README.md"), "# doc\n");
+
+    const renderer = createTestRenderer(64, 18);
+    const navigator = new FileNavigatorRenderable({
+      rootPath: path.join(root, "workspace"),
+      currentPath: path.join(root, "workspace", "src"),
+      mode: "directory",
+      layout: { width: "100%", height: 12 },
+    });
+
+    renderer.add(navigator);
+    renderer.focus(navigator);
+    const snapshot = renderer.renderToString();
+
+    expect(snapshot).not.toContain("README.md");
+    renderer.dispatchInput("\u007f");
+    expect(navigator.getCurrentPath()).toBe(path.join(root, "workspace"));
+    renderer.dispatchInput("\u007f");
+    expect(navigator.getCurrentPath()).toBe(path.join(root, "workspace"));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

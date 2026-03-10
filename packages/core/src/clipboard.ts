@@ -141,7 +141,7 @@ function detectClipboardBackend(
     if (commandExists("xclip")) {
       return {
         name: "xclip",
-        readCommand: ["xclip", "-selection", "clipboard", "-o"],
+        readCommand: ["xclip", "-selection", "clipboard", "-t", "text/plain", "-o"],
         writeCommand: ["xclip", "-selection", "clipboard"],
       };
     }

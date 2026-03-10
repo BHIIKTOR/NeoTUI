@@ -1,4 +1,4 @@
-import type { RenderEvent } from "./events";
+import type { EventModifiers, RenderEvent } from "./events";
 import { createSyntheticEvent } from "./events";
 import {
   BoxRenderable,
@@ -15,6 +15,7 @@ import {
   splitGraphemes,
   TextareaControllerModel,
   type TextareaDocumentModel,
+  type TextareaSubmitMode,
   type TextSelection,
 } from "./text";
 import type { BaseLayoutProps, BaseStyleProps, Rect, Size, WrapMode } from "./types";
@@ -54,7 +55,11 @@ export class InputRenderable extends BoxRenderable {
 
   setValue(value: string): this {
     const previousValue = this.getValue();
-    this.buffer.setText(this.limitValue(value));
+    const nextValue = this.limitValue(value);
+    if (previousValue === nextValue) {
+      return this;
+    }
+    this.buffer.setText(nextValue);
     this.emitChange(previousValue);
     this.invalidate("input:value");
     return this;
@@ -121,7 +126,7 @@ export class InputRenderable extends BoxRenderable {
       case "Tab":
         return;
       default:
-        if (event.text && !event.modifiers.ctrl && !event.modifiers.meta) {
+        if (event.text && shouldInsertPrintableText(event.modifiers)) {
           this.insertValue(event.text);
           event.preventDefault();
           return;
@@ -210,6 +215,7 @@ export class InputRenderable extends BoxRenderable {
 
 export interface TextareaRenderableOptions extends InputRenderableOptions {
   wrapMode?: WrapMode;
+  submitMode?: TextareaSubmitMode;
   submitOnCtrlEnter?: boolean;
   showScrollbars?: boolean;
   tabString?: string;
@@ -225,7 +231,7 @@ export class TextareaRenderable extends BoxRenderable {
 
   placeholder: string;
   focused = false;
-  submitOnCtrlEnter: boolean;
+  submitMode: TextareaSubmitMode;
   showScrollbars: boolean;
   tabString: string;
   summarizePastedText: boolean;
@@ -242,7 +248,8 @@ export class TextareaRenderable extends BoxRenderable {
       },
     });
     this.placeholder = options.placeholder ?? "";
-    this.submitOnCtrlEnter = options.submitOnCtrlEnter ?? true;
+    this.submitMode =
+      options.submitMode ?? (options.submitOnCtrlEnter === false ? "none" : "mod-enter");
     this.showScrollbars = options.showScrollbars ?? true;
     this.tabString = options.tabString ?? "  ";
     this.summarizePastedText = options.summarizePastedText ?? false;
@@ -271,6 +278,9 @@ export class TextareaRenderable extends BoxRenderable {
 
   setValue(value: string): this {
     const previousValue = this.getValue();
+    if (previousValue === value) {
+      return this;
+    }
     this.document.setText(value);
     this.controller.resetViewport();
     this.emitChange(previousValue);
@@ -343,6 +353,11 @@ export class TextareaRenderable extends BoxRenderable {
     this.controller.setWrapMode(mode, this.viewportWidth(), this.viewportHeight());
     this.controller.ensureCursorVisible(this.viewportWidth(), this.viewportHeight());
     this.invalidate("textarea:wrap-mode");
+    return this;
+  }
+
+  setSubmitMode(mode: TextareaSubmitMode): this {
+    this.submitMode = mode;
     return this;
   }
 
@@ -631,7 +646,7 @@ export class TextareaRenderable extends BoxRenderable {
       clipboardBindings: this.renderer?.getClipboardBindings(),
       pasteSummaryLineThreshold: this.pasteSummaryLineThreshold,
       pasteSummaryThreshold: this.pasteSummaryThreshold,
-      submitOnCtrlEnter: this.submitOnCtrlEnter,
+      submitMode: this.submitMode,
       summarizePastedText: this.summarizePastedText,
       tabString: this.tabString,
       visibleHeight: this.viewportHeight(),
@@ -1205,4 +1220,18 @@ function containsPoint(rect: Rect, x: number, y: number): boolean {
 
 function clampIndex(value: number, max: number): number {
   return Math.max(0, Math.min(value, max));
+}
+
+function shouldInsertPrintableText(
+  modifiers: EventModifiers,
+): boolean {
+  if (modifiers.meta) {
+    return false;
+  }
+
+  if (modifiers.alt && !modifiers.ctrl) {
+    return false;
+  }
+
+  return !(modifiers.ctrl && !modifiers.alt);
 }

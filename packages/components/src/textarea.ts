@@ -1,6 +1,7 @@
 import {
   type BaseLayoutProps,
   type BaseStyleProps,
+  type TextareaSubmitMode as CoreTextareaSubmitMode,
   type Rect,
   type RenderEvent,
   resolveDimension,
@@ -11,7 +12,7 @@ import {
 import { defaultComponentTheme } from "./theme";
 
 export type TextareaViewportMode = "auto-resize" | "fixed";
-export type TextareaSubmitMode = "ctrl-enter" | "meta-enter" | "none";
+export type TextareaSubmitMode = CoreTextareaSubmitMode;
 
 export interface TextareaControlRenderableOptions {
   value?: string;
@@ -51,7 +52,7 @@ export class TextareaControlRenderable extends TextareaRenderable {
       summarizePastedText: options.summarizePastedText ?? false,
       pasteSummaryThreshold: options.pasteSummaryThreshold,
       pasteSummaryLineThreshold: options.pasteSummaryLineThreshold,
-      submitOnCtrlEnter: options.submitMode !== "none",
+      submitMode: options.submitMode ?? "mod-enter",
       layout: {
         height: Math.max(4, options.minRows ?? 4),
         ...options.layout,
@@ -75,6 +76,9 @@ export class TextareaControlRenderable extends TextareaRenderable {
   }
 
   override setValue(value: string): this {
+    if (this.getValue() === value) {
+      return this;
+    }
     super.setValue(value);
     this.syncHeight();
     return this;
@@ -83,6 +87,11 @@ export class TextareaControlRenderable extends TextareaRenderable {
   override setWrapMode(mode: WrapMode): this {
     super.setWrapMode(mode);
     this.syncHeight();
+    return this;
+  }
+
+  override setSubmitMode(mode: TextareaSubmitMode): this {
+    super.setSubmitMode(mode);
     return this;
   }
 
@@ -109,7 +118,7 @@ export class TextareaControlRenderable extends TextareaRenderable {
 
     return {
       width: measured.width,
-      height: nextRows + 2,
+      height: nextRows + (this.hasBorder() ? 2 : 0),
     };
   }
 
@@ -171,7 +180,7 @@ export class TextareaControlRenderable extends TextareaRenderable {
           event.key === "Delete" ||
           event.key === "Enter" ||
           event.key === "Tab" ||
-          Boolean(event.text))
+          (Boolean(event.text) && !event.modifiers.ctrl && !event.modifiers.meta && !event.modifiers.alt))
       ) {
         event.preventDefault();
         return;
@@ -203,7 +212,22 @@ export class TextareaControlRenderable extends TextareaRenderable {
       return;
     }
 
-    const width = Math.max(1, this.layoutState.innerBounds.width || 32);
+    const measuredWidth = this.layoutState.innerBounds.width;
+    if (
+      measuredWidth <= 0 &&
+      this.layoutProps.width !== undefined &&
+      typeof this.layoutProps.width !== "number"
+    ) {
+      return;
+    }
+
+    const width = Math.max(
+      1,
+      measuredWidth ||
+        (typeof this.layoutProps.width === "number"
+          ? this.layoutProps.width - (this.hasBorder() ? 2 : 0)
+          : 32),
+    );
     const viewport = new TextareaViewportModel(
       this.getValue() || this.placeholder || "",
       width,
@@ -211,7 +235,7 @@ export class TextareaControlRenderable extends TextareaRenderable {
     );
     const nextRows = clampRowCount(viewport.contentHeight || 1, this.minRows, this.maxRows);
     this.updateLayout({
-      height: nextRows + 2,
+      height: nextRows + (this.hasBorder() ? 2 : 0),
     });
   }
 

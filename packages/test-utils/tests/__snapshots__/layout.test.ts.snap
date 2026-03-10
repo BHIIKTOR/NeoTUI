@@ -1,5 +1,382 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
+const BLANK_40 = " ".repeat(40);
+
+exports[`layout fixture single-box renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│one                                   │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture nested-column renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│┌────────────────────────────────────┐│
+└│top                                 │┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture nested-row renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture gap-column renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│┌────────────────────────────────────┐│
+└│a                                   │┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture padding renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+│ pad                                  │
+│                                      │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture margin-row renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture percent-width renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture percent-height renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│┌────────────────────────────────────┐│
+└│bottom                              │┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture absolute-overlay renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│base                                  │
+└────────┌────┐────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture min-width renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                       
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture max-width renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture align-center-row renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│┌──────┐                              │
+└│center│──────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture align-end-column renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                              ┌──────┐│
+└──────────────────────────────│end   │┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture justify-between renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture scrollbox-content renders deterministically 1`] = `
+"┌─scroll───────────────────────────────┐
+│                                      │
+│ line2                                │
+│                                      │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture scrollbar-ratio renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                     #│
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture z-index-overlay renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│┌──────────────┐                      │
+└│back          │──────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture frame-buffer renders deterministically 1`] = `
+"abcd                                    
+efgh                                    
+ijkl                                    
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture mixed-row-column renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture two-columns-percent renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture grow-split renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│                                      │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture clip-hidden renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│row1                                  │
+│row2                                  │
+│row3                                  │
+│row4                                  │
+└row5──────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture title-border renders deterministically 1`] = `
+"┌─head─────────────────────────────────┐
+│title                                 │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture auto-text-measure renders deterministically 1`] = `
+"┌──────────────────────────────────────┐
+│auto sized text line                  │
+└──────────────────────────────────────┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
+exports[`layout fixture nested-padding-overlay renders deterministically 1`] = `
+"┌─pad──────────────────────────────────┐
+│                                      │
+│ ┌───────────┌─────┐────────────────┐ │
+│ │           │tag  │                │ │
+└─│ inner     └─────┘                │─┘
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+${BLANK_40}
+                                        "
+`;
+
 exports[`layout fixture single-box renders deterministically 1`] = `
 "┌──────────────────────────────────────┐
 │one                                   │
@@ -19,10 +396,10 @@ exports[`layout fixture nested-column renders deterministically 1`] = `
 "┌──────────────────────────────────────┐
 │┌────────────────────────────────────┐│
 └│top                                 │┘
- └────────────────────────────────────┘ 
- ┌────────────────────────────────────┐ 
- │                                    │ 
- └────────────────────────────────────┘ 
+                                        
+                                        
+                                        
+                                        
                                         
                                         
                                         
@@ -49,15 +426,15 @@ exports[`layout fixture gap-column renders deterministically 1`] = `
 "┌──────────────────────────────────────┐
 │┌────────────────────────────────────┐│
 └│a                                   │┘
- └────────────────────────────────────┘ 
                                         
- ┌────────────────────────────────────┐ 
- │                                    │ 
- └────────────────────────────────────┘ 
                                         
- ┌────────────────────────────────────┐ 
- │                                    │ 
- └────────────────────────────────────┘ "
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        "
 `;
 
 exports[`layout fixture padding renders deterministically 1`] = `
@@ -109,7 +486,7 @@ exports[`layout fixture percent-height renders deterministically 1`] = `
 "┌──────────────────────────────────────┐
 │┌────────────────────────────────────┐│
 └│bottom                              │┘
- └────────────────────────────────────┘ 
+                                        
                                         
                                         
                                         
@@ -124,8 +501,8 @@ exports[`layout fixture absolute-overlay renders deterministically 1`] = `
 "┌──────────────────────────────────────┐
 │base                                  │
 └────────┌────┐────────────────────────┘
-         │    │                         
-         └────┘                         
+                                        
+                                        
                                         
                                         
                                         
@@ -169,7 +546,7 @@ exports[`layout fixture align-center-row renders deterministically 1`] = `
 "┌──────────────────────────────────────┐
 │┌──────┐                              │
 └│center│──────────────────────────────┘
- └──────┘                               
+                                        
                                         
                                         
                                         
@@ -184,7 +561,7 @@ exports[`layout fixture align-end-column renders deterministically 1`] = `
 "┌──────────────────────────────────────┐
 │                              ┌──────┐│
 └──────────────────────────────│end   │┘
-                               └──────┘ 
+                                        
                                         
                                         
                                         
@@ -244,9 +621,9 @@ exports[`layout fixture z-index-overlay renders deterministically 1`] = `
 "┌──────────────────────────────────────┐
 │┌──────────────┐                      │
 └│back          │──────────────────────┘
- │     ┌────────┐                       
- │     │        │                       
- └─────└────────┘                       
+                                        
+                                        
+                                        
                                         
                                         
                                         
@@ -273,13 +650,13 @@ ijkl
 exports[`layout fixture mixed-row-column renders deterministically 1`] = `
 "┌──────────────────────────────────────┐
 │                                      │
-└─────────────┌──────────────────────┐─┘
-              │                      │  
-              └──────────────────────┘  
+└──────────────────────────────────────┘
                                         
-              ┌──────────────────────┐  
-              │                      │  
-              └──────────────────────┘  
+                                        
+                                        
+                                        
+                                        
+                                        
                                         
                                         
                                         "
@@ -366,8 +743,8 @@ exports[`layout fixture nested-padding-overlay renders deterministically 1`] = `
 │ ┌───────────┌─────┐────────────────┐ │
 │ │           │tag  │                │ │
 └─│ inner     └─────┘                │─┘
-  │                                  │  
-  └──────────────────────────────────┘  
+                                        
+                                        
                                         
                                         
                                         

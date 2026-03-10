@@ -1305,6 +1305,14 @@ export interface TextareaKeyInput {
   text?: string;
 }
 
+export type TextareaSubmitMode =
+  | "none"
+  | "enter"
+  | "mod-enter"
+  | "ctrl-enter"
+  | "meta-enter"
+  | "shift-enter";
+
 export interface TextareaPointerInput {
   extendSelection: boolean;
   localX: number;
@@ -1316,6 +1324,7 @@ export interface TextareaPointerInput {
 
 export interface TextareaInteractionOptions extends TextareaDocumentInsertOptions {
   clipboardBindings?: ClipboardShortcutProfile;
+  submitMode?: TextareaSubmitMode;
   submitOnCtrlEnter?: boolean;
   tabString?: string;
   visibleHeight: number;
@@ -1778,7 +1787,9 @@ export class TextareaControllerModel {
     input: TextareaKeyInput,
     options: TextareaInteractionOptions,
   ): TextareaInteractionResult {
-    switch (input.key) {
+    const commandKey = input.key.length === 1 ? input.key.toLowerCase() : input.key;
+
+    switch (commandKey) {
       case "ArrowLeft":
         if (input.modifiers.ctrl || input.modifiers.meta) {
           this.moveWordLeft(input.modifiers.shift);
@@ -1789,6 +1800,7 @@ export class TextareaControllerModel {
         return this.createInteractionResult({
           handled: true,
           invalidateReason: "textarea:key",
+          preventDefault: true,
         });
       case "ArrowRight":
         if (input.modifiers.ctrl || input.modifiers.meta) {
@@ -1800,6 +1812,7 @@ export class TextareaControllerModel {
         return this.createInteractionResult({
           handled: true,
           invalidateReason: "textarea:key",
+          preventDefault: true,
         });
       case "ArrowUp":
         this.moveVertical(-1, input.modifiers.shift, options.visibleWidth, options.visibleHeight);
@@ -1839,6 +1852,7 @@ export class TextareaControllerModel {
         return this.createInteractionResult({
           handled: true,
           invalidateReason: "textarea:key",
+          preventDefault: true,
         });
       case "End":
         if (input.modifiers.ctrl || input.modifiers.meta) {
@@ -1850,6 +1864,7 @@ export class TextareaControllerModel {
         return this.createInteractionResult({
           handled: true,
           invalidateReason: "textarea:key",
+          preventDefault: true,
         });
       case "Backspace": {
         const changed = this.backspace();
@@ -1861,6 +1876,7 @@ export class TextareaControllerModel {
         return this.createInteractionResult({
           handled: true,
           invalidateReason: changed ? "textarea:key" : undefined,
+          preventDefault: true,
           valueChanged: changed,
         });
       }
@@ -1874,6 +1890,7 @@ export class TextareaControllerModel {
         return this.createInteractionResult({
           handled: true,
           invalidateReason: changed ? "textarea:key" : undefined,
+          preventDefault: true,
           valueChanged: changed,
         });
       }
@@ -1929,7 +1946,7 @@ export class TextareaControllerModel {
         }
         break;
       case "Enter":
-        if (options.submitOnCtrlEnter && (input.modifiers.ctrl || input.modifiers.meta)) {
+        if (this.matchesSubmitShortcut(input.modifiers, options)) {
           return this.createInteractionResult({
             handled: true,
             preventDefault: true,
@@ -1944,7 +1961,7 @@ export class TextareaControllerModel {
         break;
     }
 
-    if (input.text && !input.modifiers.ctrl && !input.modifiers.meta && !input.modifiers.alt) {
+    if (input.text && this.shouldInsertPrintableText(input.modifiers)) {
       return this.insertText(input.text, options);
     }
 
@@ -2093,6 +2110,46 @@ export class TextareaControllerModel {
 
   private shouldRenderPlaceholder(focused: boolean, placeholder: string): boolean {
     return !focused && this.document.getText().length === 0 && placeholder.length > 0;
+  }
+
+  private shouldInsertPrintableText(modifiers: EventModifiers): boolean {
+    if (modifiers.meta) {
+      return false;
+    }
+
+    if (modifiers.alt && !modifiers.ctrl) {
+      return false;
+    }
+
+    return !(modifiers.ctrl && !modifiers.alt);
+  }
+
+  private resolveSubmitMode(options: TextareaInteractionOptions): TextareaSubmitMode {
+    if (options.submitMode) {
+      return options.submitMode;
+    }
+
+    return options.submitOnCtrlEnter ? "mod-enter" : "none";
+  }
+
+  private matchesSubmitShortcut(
+    modifiers: EventModifiers,
+    options: TextareaInteractionOptions,
+  ): boolean {
+    switch (this.resolveSubmitMode(options)) {
+      case "enter":
+        return !modifiers.ctrl && !modifiers.meta && !modifiers.alt && !modifiers.shift;
+      case "ctrl-enter":
+        return modifiers.ctrl;
+      case "meta-enter":
+        return modifiers.meta;
+      case "mod-enter":
+        return modifiers.ctrl || modifiers.meta;
+      case "shift-enter":
+        return modifiers.shift;
+      default:
+        return false;
+    }
   }
 
   private matchesShortcut(
@@ -2368,11 +2425,11 @@ export function renderTextBlock(
 
 export function normalizeTextSpans(content: string | TextSpan[], href?: string): TextSpan[] {
   if (typeof content === "string") {
-    return [{ text: content, href }];
+    return [{ text: sanitizeRenderableText(content), href }];
   }
 
   return content.map((span) => ({
-    text: span.text,
+    text: sanitizeRenderableText(span.text),
     href: span.href ?? href,
     fg: span.fg,
     bg: span.bg,
@@ -2480,6 +2537,24 @@ function materializeWrappedLine(segments: StyledGrapheme[]): WrappedLine {
     plainText: spans.map((span) => span.text).join(""),
     width: segments.reduce((total, segment) => total + segment.width, 0),
   };
+}
+
+function sanitizeRenderableText(value: string): string {
+  if (value.length === 0) {
+    return value;
+  }
+
+  return stripAnsiSequences(value)
+    .replace(/\r/g, "")
+    .replace(/\t/g, "  ")
+    .replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g, "");
+}
+
+function stripAnsiSequences(value: string): string {
+  return value
+    .replace(/\u001b\][^\u0007\u001b]*(?:\u0007|\u001b\\)/g, "")
+    .replace(/\u001bP[\s\S]*?\u001b\\/g, "")
+    .replace(/\u001b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
 }
 
 function layoutTextareaRows(

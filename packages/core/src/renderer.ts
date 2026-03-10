@@ -138,6 +138,10 @@ export class KittyRenderer {
     };
   }
 
+  isRunning(): boolean {
+    return this.running;
+  }
+
   invalidate(node: Renderable, reason: string): void {
     this.dirtyIds.add(node.id);
     const reasons = this.invalidationReasons.get(node.id) ?? [];

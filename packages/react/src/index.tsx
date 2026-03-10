@@ -279,7 +279,9 @@ const reconciler = coerceReconciler(
         return null;
       },
       resetAfterCommit(container: ReactContainer) {
-        container.renderer.renderFrame();
+        if (container.renderer.isRunning()) {
+          container.renderer.renderFrame();
+        }
       },
       getPublicInstance(instance: ReactHostNode | ReactTextInstance) {
         return instance;
@@ -343,7 +345,6 @@ export function createReactRoot(renderer: KittyRenderer): ReactRoot {
     () => undefined,
     null,
   );
-  let lastElement: ReactNode = null;
 
   const renderElement = (element: ReactNode) => {
     reconciler.updateContainerSync(
@@ -354,15 +355,13 @@ export function createReactRoot(renderer: KittyRenderer): ReactRoot {
   };
 
   const flush = () => {
-    if (lastElement !== null) {
-      renderElement(lastElement);
-    } else {
-      reconciler.updateContainerSync(null, root, null);
-    }
-
     reconciler.flushSyncWork();
-    reconciler.flushPassiveEffects();
-    renderer.renderFrame();
+    while (reconciler.flushPassiveEffects()) {
+      // Keep draining passive effects until React reports the queue is empty.
+    }
+    if (renderer.isRunning()) {
+      renderer.renderFrame();
+    }
   };
   const releaseEventFlush = renderer.subscribe(() => {
     queueMicrotask(flush);
@@ -374,7 +373,6 @@ export function createReactRoot(renderer: KittyRenderer): ReactRoot {
   return {
     renderer,
     render(element: ReactNode) {
-      lastElement = element;
       renderElement(element);
       flush();
     },
@@ -382,7 +380,7 @@ export function createReactRoot(renderer: KittyRenderer): ReactRoot {
     unmount() {
       releaseEventFlush();
       releaseResizeFlush();
-      lastElement = null;
+      reconciler.updateContainerSync(null, root, null);
       flush();
     },
   };

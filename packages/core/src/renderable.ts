@@ -345,6 +345,7 @@ export class BoxRenderable extends Renderable {
         bg: this.styleProps.bg,
       },
       bounds,
+      clipRect,
     );
 
     if (this.hasBorder()) {
@@ -352,7 +353,7 @@ export class BoxRenderable extends Renderable {
         fg: this.styleProps.borderFg ?? this.styleProps.fg,
         bg: this.styleProps.bg,
         titleFg: this.styleProps.titleFg ?? this.styleProps.borderFg ?? this.styleProps.fg,
-      });
+      }, clipRect);
     }
 
     if (this.content) {

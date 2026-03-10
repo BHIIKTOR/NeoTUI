@@ -138,6 +138,17 @@ export class ScrollAreaRenderable extends ScrollBoxRenderable {
       return;
     }
 
+    if (event.type === "mouse" && event.action === "wheel") {
+      if (this.direction === "horizontal") {
+        return;
+      }
+
+      const step = Math.max(1, Math.floor(Math.max(1, this.layoutState.innerBounds.height) / 4));
+      this.scrollBy(0, event.wheelDelta > 0 ? -step : step);
+      event.preventDefault();
+      return;
+    }
+
     if (event.type !== "key") {
       return;
     }
@@ -198,14 +209,13 @@ export class ScrollAreaRenderable extends ScrollBoxRenderable {
     }
 
     super.paint(context);
+    this.syncScrollbars();
 
     const children = [...this.children]
       .filter((child) => child !== this.verticalScrollbar && child !== this.horizontalScrollbar)
       .sort((left, right) => (left.layoutProps.zIndex ?? 0) - (right.layoutProps.zIndex ?? 0));
 
     this.renderScrolledChildren(context, children, this.scrollX, this.scrollY);
-
-    this.syncScrollbars();
     this.verticalScrollbar.render(context);
     this.horizontalScrollbar.render(context);
   }
@@ -219,6 +229,8 @@ export class ScrollAreaRenderable extends ScrollBoxRenderable {
     const visibleWidth = Math.max(1, this.layoutState.innerBounds.width);
     const contentHeight = this.measureContentHeight();
     const contentWidth = this.measureContentWidth();
+    this.scrollY = Math.max(0, Math.min(this.scrollY, Math.max(0, contentHeight - visibleHeight)));
+    this.scrollX = Math.max(0, Math.min(this.scrollX, Math.max(0, contentWidth - visibleWidth)));
     const showVertical =
       this.showScrollbars &&
       this.direction !== "horizontal" &&

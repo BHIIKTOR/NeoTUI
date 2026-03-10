@@ -38,6 +38,12 @@ export {
   SelectFieldRenderable,
   TextareaFieldRenderable,
 } from "./field-variants";
+export type {
+  FileNavigatorEntry,
+  FileNavigatorMode,
+  FileNavigatorRenderableOptions,
+} from "./file-navigator";
+export { FileNavigatorRenderable } from "./file-navigator";
 export type { InputControlRenderableOptions } from "./input";
 export { InputControlRenderable } from "./input";
 export type { KbdRenderableOptions } from "./kbd";

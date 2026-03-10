@@ -4,6 +4,7 @@ import {
   BoxRenderable,
   createSyntheticEvent,
   EditingBuffer,
+  type EventModifiers,
   measureTextWidth,
   type RenderEvent,
   renderTextBlock,
@@ -73,6 +74,9 @@ export class InputControlRenderable extends BoxRenderable {
 
   setValue(value: string): this {
     const previousValue = this.getValue();
+    if (previousValue === value) {
+      return this;
+    }
     this.buffer.setText(value);
     this.emitChange(previousValue);
     this.invalidate("input-control:value");
@@ -192,7 +196,7 @@ export class InputControlRenderable extends BoxRenderable {
       case "Tab":
         return;
       default:
-        if (event.text && !event.modifiers.ctrl && !event.modifiers.meta) {
+        if (event.text && shouldInsertPrintableText(event.modifiers)) {
           if (this.readOnly) {
             event.preventDefault();
             return;
@@ -331,4 +335,17 @@ function resolveInputBorderColor(invalid: boolean, focused: boolean): string {
   }
 
   return focused ? defaultComponentTheme.borderStrong : defaultComponentTheme.border;
+}
+
+function shouldInsertPrintableText(modifiers: EventModifiers): boolean {
+  if (modifiers.meta) {
+    return false;
+  }
+
+  if (modifiers.alt && !modifiers.ctrl) {
+    return false;
+  }
+
+  // Allow AltGr-style printable input (ctrl+alt) while still blocking control shortcuts.
+  return !(modifiers.ctrl && !modifiers.alt);
 }

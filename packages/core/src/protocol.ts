@@ -3,6 +3,8 @@ export const CONTROL_SEQUENCES = {
   exitAlternateScreen: "\u001b[?1049l",
   hideCursor: "\u001b[?25l",
   showCursor: "\u001b[?25h",
+  enableKittyKeyboard: "\u001b[>9u",
+  disableKittyKeyboard: "\u001b[<1u",
   enableBracketedPaste: "\u001b[?2004h",
   disableBracketedPaste: "\u001b[?2004l",
   enableMouseTracking: "\u001b[?1002h\u001b[?1006h",
@@ -70,6 +72,14 @@ export class ProtocolWriter {
     this.write(CONTROL_SEQUENCES.showCursor);
   }
 
+  enableKittyKeyboard(): void {
+    this.write(CONTROL_SEQUENCES.enableKittyKeyboard);
+  }
+
+  disableKittyKeyboard(): void {
+    this.write(CONTROL_SEQUENCES.disableKittyKeyboard);
+  }
+
   enableBracketedPaste(): void {
     this.write(CONTROL_SEQUENCES.enableBracketedPaste);
   }
@@ -102,6 +112,9 @@ export class ProtocolWriter {
 
   openHyperlink(href: string): void {
     const safeHref = normalizeHyperlink(href);
+    if (!safeHref) {
+      return;
+    }
     this.write(`\u001b]8;;${safeHref}\u001b\\`);
   }
 
@@ -161,12 +174,23 @@ export class ProtocolWriter {
   }
 }
 
-function normalizeHyperlink(href: string): string {
-  const safeHref = sanitizeProtocolText(href, "hyperlink");
-  const url = new URL(safeHref);
+function normalizeHyperlink(href: string): string | null {
+  let safeHref = "";
+  try {
+    safeHref = sanitizeProtocolText(href, "hyperlink");
+  } catch {
+    return null;
+  }
+
+  let url: URL;
+  try {
+    url = new URL(safeHref);
+  } catch {
+    return null;
+  }
 
   if (!ALLOWED_HYPERLINK_PROTOCOLS.has(url.protocol)) {
-    throw new Error(`Unsupported hyperlink protocol: ${url.protocol}`);
+    return null;
   }
 
   return safeHref;

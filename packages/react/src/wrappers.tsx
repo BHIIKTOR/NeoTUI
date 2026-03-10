@@ -42,6 +42,8 @@ import {
   type TableRenderableOptions,
   TabsRenderable,
   type TabsRenderableOptions,
+  TextareaControlRenderable,
+  type TextareaControlRenderableOptions,
   TextareaFieldRenderable,
   type TextareaFieldRenderableOptions,
   ToastRenderable,
@@ -163,6 +165,13 @@ export interface CommandProps
 export interface InputFieldProps
   extends InputFieldRenderableOptions,
     ManagedRenderableProps<InputFieldRenderable> {
+  onChange?: EventHandler;
+  onSubmit?: EventHandler;
+}
+
+export interface TextareaControlProps
+  extends TextareaControlRenderableOptions,
+    ManagedRenderableProps<TextareaControlRenderable> {
   onChange?: EventHandler;
   onSubmit?: EventHandler;
 }
@@ -672,9 +681,15 @@ export const Command = forwardRef<CommandRenderable, CommandProps>(function Comm
 export const InputField = forwardRef<InputFieldRenderable, InputFieldProps>(
   function InputField(props, ref) {
     const instance = useManagedInstance(() => new InputFieldRenderable(props), ref);
+    const suppressChangeRef = useRef(false);
 
     useCommonRenderableProps(instance, props.fieldLayout, props.fieldStyle);
-    useRenderableEvent(instance.input, "change", props.onChange);
+    useRenderableEvent(instance.input, "change", (event) => {
+      if (suppressChangeRef.current) {
+        return;
+      }
+      props.onChange?.(event);
+    });
     useRenderableEvent(instance.input, "submit", props.onSubmit);
     useEffect(() => {
       syncField(instance, {
@@ -687,7 +702,14 @@ export const InputField = forwardRef<InputFieldRenderable, InputFieldProps>(
         validationState: props.validationState,
       });
       instance.input.placeholder = props.placeholder ?? "";
-      instance.input.setValue(props.value ?? "");
+      if (instance.input.getValue() !== (props.value ?? "")) {
+        suppressChangeRef.current = true;
+        try {
+          instance.input.setValue(props.value ?? "");
+        } finally {
+          suppressChangeRef.current = false;
+        }
+      }
       instance.input.setDisabled(props.disabled ?? false);
       instance.input.setReadOnly(props.readOnly ?? false);
       instance.input.setInvalid(props.invalid ?? false);
@@ -721,12 +743,71 @@ export const InputField = forwardRef<InputFieldRenderable, InputFieldProps>(
   },
 );
 
+export const TextareaControl = forwardRef<TextareaControlRenderable, TextareaControlProps>(
+  function TextareaControl(props, ref) {
+    const instance = useManagedInstance(() => new TextareaControlRenderable(props), ref);
+    const suppressChangeRef = useRef(false);
+
+    useCommonRenderableProps(instance, props.layout, props.style);
+    useRenderableEvent(instance, "change", (event) => {
+      if (suppressChangeRef.current) {
+        return;
+      }
+      props.onChange?.(event);
+    });
+    useRenderableEvent(instance, "submit", props.onSubmit);
+    useEffect(() => {
+      instance.placeholder = props.placeholder ?? "";
+      if (instance.getValue() !== (props.value ?? "")) {
+        suppressChangeRef.current = true;
+        try {
+          instance.setValue(props.value ?? "");
+        } finally {
+          suppressChangeRef.current = false;
+        }
+      }
+      instance.setDisabled(props.disabled ?? false);
+      instance.setReadOnly(props.readOnly ?? false);
+      instance.setInvalid(props.invalid ?? false);
+      instance.autoResize =
+        props.viewportMode === "auto-resize" ? true : (props.autoResize ?? false);
+      instance.minRows = props.minRows ?? 4;
+      instance.maxRows = props.maxRows;
+      instance.setWrapMode(props.wrapMode ?? "word");
+      instance.setSubmitMode(props.submitMode ?? "mod-enter");
+      instance.showScrollbars = props.showScrollbars ?? true;
+    }, [
+      instance,
+      props.autoResize,
+      props.disabled,
+      props.invalid,
+      props.maxRows,
+      props.minRows,
+      props.placeholder,
+      props.readOnly,
+      props.showScrollbars,
+      props.submitMode,
+      props.value,
+      props.viewportMode,
+      props.wrapMode,
+    ]);
+
+    return renderManaged(instance);
+  },
+);
+
 export const TextareaField = forwardRef<TextareaFieldRenderable, TextareaFieldProps>(
   function TextareaField(props, ref) {
     const instance = useManagedInstance(() => new TextareaFieldRenderable(props), ref);
+    const suppressChangeRef = useRef(false);
 
     useCommonRenderableProps(instance, props.fieldLayout, props.fieldStyle);
-    useRenderableEvent(instance.textarea, "change", props.onChange);
+    useRenderableEvent(instance.textarea, "change", (event) => {
+      if (suppressChangeRef.current) {
+        return;
+      }
+      props.onChange?.(event);
+    });
     useRenderableEvent(instance.textarea, "submit", props.onSubmit);
     useEffect(() => {
       syncField(instance, {
@@ -739,7 +820,14 @@ export const TextareaField = forwardRef<TextareaFieldRenderable, TextareaFieldPr
         validationState: props.validationState,
       });
       instance.textarea.placeholder = props.placeholder ?? "";
-      instance.textarea.setValue(props.value ?? "");
+      if (instance.textarea.getValue() !== (props.value ?? "")) {
+        suppressChangeRef.current = true;
+        try {
+          instance.textarea.setValue(props.value ?? "");
+        } finally {
+          suppressChangeRef.current = false;
+        }
+      }
       instance.textarea.setDisabled(props.disabled ?? false);
       instance.textarea.setReadOnly(props.readOnly ?? false);
       instance.textarea.setInvalid(props.invalid ?? false);
@@ -748,6 +836,7 @@ export const TextareaField = forwardRef<TextareaFieldRenderable, TextareaFieldPr
       instance.textarea.minRows = props.minRows ?? 4;
       instance.textarea.maxRows = props.maxRows;
       instance.textarea.setWrapMode(props.wrapMode ?? "word");
+      instance.textarea.setSubmitMode(props.submitMode ?? "mod-enter");
       if (props.layout) {
         instance.textarea.updateLayout(props.layout);
       }
@@ -770,6 +859,7 @@ export const TextareaField = forwardRef<TextareaFieldRenderable, TextareaFieldPr
       props.readOnly,
       props.required,
       props.style,
+      props.submitMode,
       props.validationState,
       props.value,
       props.viewportMode,
@@ -783,9 +873,15 @@ export const TextareaField = forwardRef<TextareaFieldRenderable, TextareaFieldPr
 export const SelectField = forwardRef<SelectFieldRenderable, SelectFieldProps>(
   function SelectField(props, ref) {
     const instance = useManagedInstance(() => new SelectFieldRenderable(props), ref);
+    const suppressChangeRef = useRef(false);
 
     useCommonRenderableProps(instance, props.fieldLayout, props.fieldStyle);
-    useRenderableEvent(instance.select, "change", props.onChange);
+    useRenderableEvent(instance.select, "change", (event) => {
+      if (suppressChangeRef.current) {
+        return;
+      }
+      props.onChange?.(event);
+    });
     useEffect(() => {
       syncField(instance, {
         label: props.label,
@@ -798,8 +894,13 @@ export const SelectField = forwardRef<SelectFieldRenderable, SelectFieldProps>(
       });
       instance.select.placeholder = props.placeholder ?? "Select…";
       instance.select.setOptions(props.options);
-      if (typeof props.value !== "undefined") {
-        instance.select.setValue(props.value);
+      if (typeof props.value !== "undefined" && instance.select.getValue() !== props.value) {
+        suppressChangeRef.current = true;
+        try {
+          instance.select.setValue(props.value);
+        } finally {
+          suppressChangeRef.current = false;
+        }
       }
       instance.select.setDisabled(props.disabled ?? false);
       instance.select.setInvalid(props.invalid ?? false);
@@ -1092,16 +1193,25 @@ export const Window = forwardRef<WindowRenderable, WindowProps>(function Window(
     if (typeof props.content === "string") {
       instance.setContent(props.content);
     }
-    if (typeof props.x === "number" && typeof props.y === "number") {
-      instance.moveTo(props.x, props.y);
+    const nextLayout: BaseLayoutProps = {};
+    if (typeof props.x === "number") {
+      nextLayout.left = props.x;
     }
-    if (typeof props.width === "number" && typeof props.height === "number") {
-      instance.resizeTo(props.width, props.height);
-    } else {
-      instance.updateLayout({
-        width: props.width ?? instance.layoutProps.width,
-        height: props.height ?? instance.layoutProps.height,
-      });
+    if (typeof props.y === "number") {
+      nextLayout.top = props.y;
+    }
+    if (typeof props.width === "number") {
+      nextLayout.width = Math.max(instance.minWidth, props.width);
+    } else if (typeof props.width !== "undefined") {
+      nextLayout.width = props.width;
+    }
+    if (typeof props.height === "number") {
+      nextLayout.height = Math.max(instance.minHeight, props.height);
+    } else if (typeof props.height !== "undefined") {
+      nextLayout.height = props.height;
+    }
+    if (Object.keys(nextLayout).length > 0) {
+      instance.updateLayout(nextLayout);
     }
     if ((props.active ?? false) !== instance.active) {
       instance.setActive(props.active ?? false);

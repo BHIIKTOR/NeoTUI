@@ -42,6 +42,69 @@ test("textarea supports editing and paste insertion", () => {
   expect(textarea.getValue()).toBe("alpha\nbeta");
 });
 
+test("textarea does not insert pure alt shortcut glyphs as printable text", () => {
+  const renderer = createTestRenderer(40, 12);
+  const textarea = new TextareaRenderable({ value: "draft" });
+  const shortcutEvent = {
+    type: "key",
+    key: "p",
+    text: "π",
+    modifiers: { shift: true, alt: true, ctrl: false, meta: false },
+    defaultPrevented: false,
+    propagationStopped: false,
+    preventDefault() {
+      shortcutEvent.defaultPrevented = true;
+    },
+    stopPropagation() {
+      shortcutEvent.propagationStopped = true;
+    },
+  };
+
+  renderer.add(textarea);
+  renderer.focus(textarea);
+  renderer.dispatchEvent(textarea, shortcutEvent as never);
+
+  expect(textarea.getValue()).toBe("draft");
+});
+
+test("inputs ignore kitty modifier-only key sequences", () => {
+  const renderer = createTestRenderer(40, 12);
+  const input = new InputRenderable({ value: "NeoTui" });
+  const textarea = new TextareaRenderable({ value: "draft" });
+
+  renderer.add(input, textarea);
+
+  renderer.focus(input);
+  renderer.dispatchInput("\u001b[57441;2u");
+  renderer.dispatchInput("\u001b[57443;3u");
+  renderer.dispatchInput("\u001b[57449;3u");
+  expect(input.getValue()).toBe("NeoTui");
+
+  renderer.focus(textarea);
+  renderer.dispatchInput("\u001b[57441;2u");
+  renderer.dispatchInput("\u001b[57443;3u");
+  renderer.dispatchInput("\u001b[57449;3u");
+  expect(textarea.getValue()).toBe("draft");
+});
+
+test("inputs preserve shifted punctuation and caps-lock letters from kitty keyboard sequences", () => {
+  const renderer = createTestRenderer(40, 12);
+  const input = new InputRenderable({ value: "" });
+  const textarea = new TextareaRenderable({ value: "" });
+
+  renderer.add(input, textarea);
+
+  renderer.focus(input);
+  renderer.dispatchInput("\u001b[47:63;2u");
+  renderer.dispatchInput("\u001b[97;65u");
+  expect(input.getValue()).toBe("?A");
+
+  renderer.focus(textarea);
+  renderer.dispatchInput("\u001b[47:63;2u");
+  renderer.dispatchInput("\u001b[97;65u");
+  expect(textarea.getValue()).toBe("?A");
+});
+
 test("textarea supports multiline keyboard movement select-all and undo-redo", () => {
   const renderer = createTestRenderer(40, 12);
   const textarea = new TextareaRenderable({

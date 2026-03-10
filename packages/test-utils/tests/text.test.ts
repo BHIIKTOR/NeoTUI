@@ -208,7 +208,7 @@ test("textarea controller owns keyboard shortcut, clipboard, and submit policy",
       cut: "ctrl",
       paste: "ctrl",
     },
-    submitOnCtrlEnter: true,
+    submitMode: "mod-enter",
     summarizePastedText: true,
     tabString: "  ",
     visibleHeight: 4,
@@ -234,6 +234,15 @@ test("textarea controller owns keyboard shortcut, clipboard, and submit policy",
     options,
   );
   expect(copy.clipboardWriteText).toBe("alpha\nbeta");
+
+  const shiftedCopy = controller.handleKeyInput(
+    {
+      key: "C",
+      modifiers: { shift: true, alt: false, ctrl: true, meta: false },
+    },
+    options,
+  );
+  expect(shiftedCopy.clipboardWriteText).toBe("alpha\nbeta");
 
   const cut = controller.handleKeyInput(
     {
@@ -267,6 +276,63 @@ test("textarea controller owns keyboard shortcut, clipboard, and submit policy",
     options,
   );
   expect(submit.submitValue).toBe("release notes");
+
+  const shiftSubmit = controller.handleKeyInput(
+    {
+      key: "Enter",
+      modifiers: { shift: true, alt: false, ctrl: false, meta: false },
+    },
+    {
+      ...options,
+      submitMode: "shift-enter",
+    },
+  );
+  expect(shiftSubmit.submitValue).toBe("release notes");
+
+  const plainEnterSubmit = controller.handleKeyInput(
+    {
+      key: "Enter",
+      modifiers: { shift: false, alt: false, ctrl: false, meta: false },
+    },
+    {
+      ...options,
+      submitMode: "enter",
+    },
+  );
+  expect(plainEnterSubmit.submitValue).toBe("release notes");
+
+  const shiftedSlash = controller.handleKeyInput(
+    {
+      key: "/",
+      text: "/",
+      modifiers: { shift: true, alt: false, ctrl: false, meta: false },
+    },
+    options,
+  );
+  expect(shiftedSlash.valueChanged).toBe(true);
+  expect(controller.document.getText()).toBe("release notes/");
+
+  const altGraphText = controller.handleKeyInput(
+    {
+      key: "@",
+      text: "@",
+      modifiers: { shift: false, alt: true, ctrl: true, meta: false },
+    },
+    options,
+  );
+  expect(altGraphText.valueChanged).toBe(true);
+  expect(controller.document.getText()).toBe("release notes/@");
+
+  const altShortcutText = controller.handleKeyInput(
+    {
+      key: "p",
+      text: "P",
+      modifiers: { shift: true, alt: true, ctrl: false, meta: false },
+    },
+    options,
+  );
+  expect(altShortcutText.valueChanged).toBe(false);
+  expect(controller.document.getText()).toBe("release notes/@");
 });
 
 test("textarea controller render state owns placeholder, cursor, selection, and scrollbars", () => {

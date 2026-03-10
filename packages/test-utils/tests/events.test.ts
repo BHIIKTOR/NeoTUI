@@ -54,6 +54,102 @@ test("parser decodes raw home and end keys", () => {
   expect(parseInput("\u001b[F")).toMatchObject([{ type: "key", key: "End" }]);
 });
 
+test("parser ignores kitty-style legacy arrow release events and keeps modifier presses", () => {
+  expect(parseInput("\u001b[1;1:3C")).toEqual([]);
+  expect(parseInput("\u001b[1;2:1C")).toMatchObject([
+    {
+      type: "key",
+      key: "ArrowRight",
+      modifiers: { shift: true, alt: false, ctrl: false, meta: false },
+    },
+  ]);
+});
+
+test("parser decodes modifyOtherKeys and modified tilde enter sequences", () => {
+  expect(parseInput("\u001b[27;2;13~")).toMatchObject([
+    {
+      type: "key",
+      key: "Enter",
+      text: "\n",
+      modifiers: { shift: true, alt: false, ctrl: false, meta: false },
+    },
+  ]);
+
+  expect(parseInput("\u001b[13;2~")).toMatchObject([
+    {
+      type: "key",
+      key: "Enter",
+      text: "\n",
+      modifiers: { shift: true, alt: false, ctrl: false, meta: false },
+    },
+  ]);
+
+  expect(parseInput("\u001b[27;4;112~")).toMatchObject([
+    {
+      type: "key",
+      key: "P",
+      text: "P",
+      modifiers: { shift: true, alt: true, ctrl: false, meta: false },
+    },
+  ]);
+});
+
+test("parser treats kitty modifier keys as named non-text events", () => {
+  expect(parseInput("\u001b[57441;2u")).toMatchObject([
+    {
+      type: "key",
+      key: "LeftShift",
+      modifiers: { shift: true, alt: false, ctrl: false, meta: false },
+    },
+  ]);
+  expect(parseInput("\u001b[57443;3u")).toMatchObject([
+    {
+      type: "key",
+      key: "LeftAlt",
+      modifiers: { shift: false, alt: true, ctrl: false, meta: false },
+    },
+  ]);
+  expect(parseInput("\u001b[57449;3u")).toMatchObject([
+    {
+      type: "key",
+      key: "RightAlt",
+      modifiers: { shift: false, alt: true, ctrl: false, meta: false },
+    },
+  ]);
+
+  expect(parseInput("\u001b[57441;2u")[0]?.text).toBeUndefined();
+  expect(parseInput("\u001b[57443;3u")[0]?.text).toBeUndefined();
+});
+
+test("parser derives shifted and caps-lock printable text from kitty key fields", () => {
+  expect(parseInput("\u001b[47:63;2u")).toMatchObject([
+    {
+      type: "key",
+      key: "?",
+      text: "?",
+      modifiers: { shift: true, alt: false, ctrl: false, meta: false },
+    },
+  ]);
+
+  expect(parseInput("\u001b[97;65u")).toMatchObject([
+    {
+      type: "key",
+      key: "A",
+      text: "A",
+      modifiers: { shift: false, alt: false, ctrl: false, meta: false },
+    },
+  ]);
+
+  expect(parseInput("\u001b[97;66u")).toMatchObject([
+    {
+      type: "key",
+      key: "a",
+      text: "a",
+      modifiers: { shift: true, alt: false, ctrl: false, meta: false },
+    },
+  ]);
+});
+
 test("focus traversal is deterministic across nested trees", () => {
   const renderer = createTestRenderer(40, 12);
   const form = new BoxRenderable({

@@ -6,6 +6,7 @@ import {
   SelectControlRenderable,
   TextareaControlRenderable,
 } from "@neotui/components";
+import { createKittyRenderer } from "@neotui/core";
 import { createTestRenderer } from "../src/index.ts";
 
 test("field label click focuses the underlying control and renders helper text", () => {
@@ -67,6 +68,17 @@ test("textarea control auto-resizes within configured row bounds", () => {
 
   textarea.setValue("one\ntwo\nthree\nfour\nfive");
   expect(textarea.layoutProps.height).toBe(6);
+});
+
+test("borderless textarea auto-resize does not add phantom chrome rows", () => {
+  const textarea = new TextareaControlRenderable({
+    value: "one\ntwo\nthree",
+    autoResize: true,
+    minRows: 1,
+    style: { border: false },
+  });
+
+  expect(textarea.layoutProps.height).toBe(3);
 });
 
 test("textarea control auto-resizes again when the renderer width changes", () => {
@@ -145,6 +157,48 @@ test("textarea control supports readonly navigation and fixed viewport mode", ()
   expect(textarea.getValue()).toBe("alpha\nbeta\ngamma\ndelta");
 
   expect(renderer.renderToString()).toContain("┃");
+});
+
+test("textarea control allows ctrl-copy while readonly", () => {
+  const clipboardWrites: string[] = [];
+  const renderer = createKittyRenderer({
+    appName: "test-renderer",
+    width: 60,
+    height: 12,
+    exitOnCtrlC: false,
+    clipboard: {
+      capabilities: {
+        backend: "mock",
+        bindings: {
+          copy: "ctrl",
+          cut: "ctrl",
+          paste: "ctrl",
+        },
+        supportsRead: true,
+        supportsWrite: true,
+      },
+      readText() {
+        return "";
+      },
+      writeText(text) {
+        clipboardWrites.push(text);
+        return true;
+      },
+    },
+  });
+  const textarea = new TextareaControlRenderable({
+    value: "alpha\nbeta",
+    readOnly: true,
+    layout: { width: 20, height: 5 },
+  });
+
+  renderer.add(textarea);
+  renderer.focus(textarea);
+  renderer.dispatchInput("\u0001");
+  renderer.dispatchInput("\u0003");
+
+  expect(textarea.getSelectedText()).toBe("alpha\nbeta");
+  expect(clipboardWrites).toEqual(["alpha\nbeta"]);
 });
 
 test("select control opens from the keyboard and commits the selected value", () => {

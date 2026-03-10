@@ -10,6 +10,7 @@ export {
   CodeRenderable,
   DiffRenderable,
   LineNumberRenderable,
+  markdownToLines,
   MarkdownRenderable,
 } from "./advanced";
 export type {
@@ -112,6 +113,7 @@ export type {
   TextareaRenderOptions,
   TextareaRenderState,
   TextareaScrollbarRenderState,
+  TextareaSubmitMode,
   TextareaVisualCell,
   TextareaVisualRow,
   TextLineMeta,

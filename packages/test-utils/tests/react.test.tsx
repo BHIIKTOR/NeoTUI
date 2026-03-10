@@ -11,6 +11,8 @@ import type {
   SelectFieldRenderable,
   SliderRenderable,
   TabsRenderable,
+  TextareaControlRenderable,
+  TextareaFieldRenderable,
   ToggleGroupRenderable,
   WindowManagerRenderable,
   WindowRenderable,
@@ -33,6 +35,7 @@ import {
   Slider,
   Table,
   Tabs,
+  TextareaControl,
   TextareaField,
   ToggleGroup,
   Toolbar,
@@ -43,6 +46,11 @@ import {
   WindowManager,
 } from "@neotui/react";
 import { useState } from "react";
+import {
+  createMemorySignalTarget,
+  createMemoryTerminalInput,
+  createMemoryTerminalOutput,
+} from "../src/index.ts";
 
 test("react root can mount and unmount without leaking renderables", () => {
   const renderer = createKittyRenderer({ width: 40, height: 12, exitOnCtrlC: false });
@@ -60,6 +68,37 @@ test("react root can mount and unmount without leaking renderables", () => {
   renderer.renderFrame();
 
   expect(renderer.root.countNodes()).toBe(1);
+});
+
+test("react root flushes the first frame when rendered before renderer start", async () => {
+  const input = createMemoryTerminalInput();
+  const output = createMemoryTerminalOutput(40, 12);
+  const signals = createMemorySignalTarget();
+  const renderer = createKittyRenderer({
+    width: 40,
+    height: 12,
+    exitOnCtrlC: false,
+    input,
+    output,
+    signalTarget: signals,
+    env: { TERM: "xterm-kitty", KITTY_WINDOW_ID: "1" },
+  });
+  const root = createReactRoot(renderer);
+
+  root.render(
+    <Panel title="react" layout={{ width: 24, height: 6, padding: 1 }}>
+      <Button label="hello react" />
+    </Panel>,
+  );
+
+  expect(output.transcript()).not.toContain("hello react");
+
+  renderer.start();
+  await Bun.sleep(5);
+
+  expect(output.transcript()).toContain("hello react");
+
+  await renderer.destroy();
 });
 
 test("react hooks can observe keyboard and terminal dimensions", async () => {
@@ -213,6 +252,96 @@ test("react wrappers render primitives, navigation, and field controls with cont
   expect(tabs.getActiveTabId()).toBe("security");
   expect(inputField.input.getValue()).toBe("kitty");
   expect(selectField.select.getValue()).toBe("admin");
+});
+
+test("controlled react textarea fields do not emit on mount and keep focus across updates", async () => {
+  const renderer = createKittyRenderer({ width: 72, height: 24, exitOnCtrlC: false });
+  const root = createReactRoot(renderer);
+  const changes: string[] = [];
+  let textareaFieldRef: TextareaFieldRenderable | null = null;
+
+  function Demo() {
+    const [value, setValue] = useState("draft");
+
+    return (
+      <Panel title="composer" layout={{ width: 48, height: 12, padding: 1, gap: 1 }}>
+        <TextareaField
+          ref={(node) => {
+            textareaFieldRef = node;
+          }}
+          label="message"
+          value={value}
+          fieldLayout={{ width: "100%" }}
+          layout={{ width: "100%", height: 6 }}
+          onChange={(event) => {
+            const nextValue = String((event as { value: string }).value);
+            changes.push(nextValue);
+            setValue(nextValue);
+          }}
+        />
+        <Button label={`len:${value.length}`} />
+      </Panel>
+    );
+  }
+
+  root.render(<Demo />);
+  const field = requireNode<TextareaFieldRenderable | null>(textareaFieldRef);
+
+  expect(changes).toEqual([]);
+
+  renderer.focus(field.textarea);
+  renderer.dispatchInput("x");
+  await Bun.sleep(5);
+
+  expect(field.textarea.getValue()).toBe("draftx");
+  expect(renderer.focusedNode).toBe(field.textarea);
+  expect(changes).toEqual(["draftx"]);
+});
+
+test("react textarea control supports shift-enter submit without field-label chrome", () => {
+  const renderer = createKittyRenderer({ width: 60, height: 12, exitOnCtrlC: false });
+  const root = createReactRoot(renderer);
+  let textareaRef: TextareaControlRenderable | null = null;
+  let submittedValue = "";
+
+  root.render(
+    <Panel title="composer" layout={{ width: 48, height: 7, padding: 1, gap: 1 }}>
+      <TextareaControl
+        ref={(node) => {
+          textareaRef = node;
+        }}
+        value="/session"
+        placeholder="Type a message"
+        layout={{ width: "100%", height: 4 }}
+        minRows={2}
+        maxRows={2}
+        submitMode="shift-enter"
+        onSubmit={(event: unknown) => {
+          submittedValue = String((event as { value?: string }).value ?? "");
+        }}
+      />
+    </Panel>,
+  );
+
+  const textarea = requireNode<TextareaControlRenderable | null>(textareaRef);
+  renderer.focus(textarea);
+  renderer.dispatchEvent(textarea, {
+    type: "key",
+    key: "Enter",
+    modifiers: { shift: true, alt: false, ctrl: false, meta: false },
+    defaultPrevented: false,
+    propagationStopped: false,
+    preventDefault() {
+      this.defaultPrevented = true;
+    },
+    stopPropagation() {
+      this.propagationStopped = true;
+    },
+  } as never);
+
+  expect(renderer.renderToString()).toContain("composer");
+  expect(renderer.renderToString()).not.toContain("message");
+  expect(submittedValue).toBe("/session");
 });
 
 test("react wrappers compose overlay bodies, footers, and managed windows", () => {

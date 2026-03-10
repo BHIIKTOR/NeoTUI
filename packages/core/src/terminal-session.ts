@@ -111,6 +111,7 @@ export class TerminalSession {
     this.registerSignals();
     this.enableRawMode();
     this.protocol.enterAlternateScreen();
+    this.protocol.enableKittyKeyboard();
     this.protocol.hideCursor();
 
     if (this.bracketedPaste) {
@@ -144,6 +145,7 @@ export class TerminalSession {
         this.protocol.disableBracketedPaste();
       }
 
+      this.protocol.disableKittyKeyboard();
       this.protocol.showCursor();
       this.protocol.exitAlternateScreen();
     }
