@@ -117,8 +117,11 @@ test("parser treats kitty modifier keys as named non-text events", () => {
     },
   ]);
 
-  expect(parseInput("\u001b[57441;2u")[0]?.text).toBeUndefined();
-  expect(parseInput("\u001b[57443;3u")[0]?.text).toBeUndefined();
+  const shiftEvent = parseInput("\u001b[57441;2u")[0];
+  const altEvent = parseInput("\u001b[57443;3u")[0];
+
+  expect(shiftEvent?.type === "key" ? shiftEvent.text : undefined).toBeUndefined();
+  expect(altEvent?.type === "key" ? altEvent.text : undefined).toBeUndefined();
 });
 
 test("parser derives shifted and caps-lock printable text from kitty key fields", () => {

@@ -17,7 +17,7 @@ import type {
   WindowManagerRenderable,
   WindowRenderable,
 } from "@neotui/components";
-import { createKittyRenderer } from "@neotui/core";
+import { createKittyRenderer, type KeyEvent } from "@neotui/core";
 import {
   Badge,
   Button,
@@ -325,10 +325,16 @@ test("react textarea control supports shift-enter submit without field-label chr
 
   const textarea = requireNode<TextareaControlRenderable | null>(textareaRef);
   renderer.focus(textarea);
-  renderer.dispatchEvent(textarea, {
+  const submitEvent: KeyEvent = {
     type: "key",
     key: "Enter",
+    text: undefined,
     modifiers: { shift: true, alt: false, ctrl: false, meta: false },
+    repeat: false,
+    timestamp: Date.now(),
+    raw: "",
+    target: textarea,
+    currentTarget: textarea,
     defaultPrevented: false,
     propagationStopped: false,
     preventDefault() {
@@ -337,7 +343,8 @@ test("react textarea control supports shift-enter submit without field-label chr
     stopPropagation() {
       this.propagationStopped = true;
     },
-  } as never);
+  };
+  renderer.dispatchEvent(textarea, submitEvent);
 
   expect(renderer.renderToString()).toContain("composer");
   expect(renderer.renderToString()).not.toContain("message");
